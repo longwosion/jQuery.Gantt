@@ -73,7 +73,7 @@
                 var id = $(a).attr("id");
                 id = id ? id : "";
                 var si = id.indexOf("-") + 1;
-                cd = cd.getFullYear() + "-" + cd.getDayForWeek().getWeekOfYear();
+                cd = cd.getDayForWeek().getFullYear() + "-" + cd.getDayForWeek().getWeekOfYear();
                 var ed = id.substring(si, id.length);
                 return cd === ed;
             }
@@ -98,12 +98,8 @@
         // the week # for the year.
         // It is used to add an id to the week divs
         Date.prototype.getWeekId = function () {
-            var y = this.getFullYear();
+            var y = this.getDayForWeek().getFullYear();
             var w = this.getDayForWeek().getWeekOfYear();
-            var m = this.getMonth();
-            if (m === 11 && w === 1) {
-                y++;
-            }
             return 'dh-' + y + "-" + w;
         };
 
@@ -133,10 +129,15 @@
         Date.prototype.getWeekOfYear = function () {
             var ys = new Date(this.getFullYear(), 0, 1);
             var sd = new Date(this.getFullYear(), this.getMonth(), this.getDate());
+            //if (ys.getDay() > 3) {
+            //    ys = new Date(sd.getFullYear(), 0, (7 - ys.getDay()));
+            //}
+            var daysCount = sd.getDayOfYear() - ys.getDayOfYear() + 1;
             if (ys.getDay() > 3) {
-                ys = new Date(sd.getFullYear(), 0, (7 - ys.getDay()));
+                daysCount = daysCount - (7 - ys.getDay());
+            } else {
+                daysCount = daysCount + ys.getDay();
             }
-            var daysCount = sd.getDayOfYear() - ys.getDayOfYear();
             return Math.ceil(daysCount / 7);
 
         };
@@ -413,10 +414,10 @@
                 var dowClass = [" sn", " wd", " wd", " wd", " wd", " wd", " sa"];
                 var gridDowClass = [" sn", "", "", "", "", "", " sa"];
 
-                var yearArr = ['<div class="row"/>'];
+                var yearArr = [];
                 var daysInYear = 0;
 
-                var monthArr = ['<div class="row"/>'];
+                var monthArr = [];
                 var daysInMonth = 0;
 
                 var dayArr = [];
@@ -544,8 +545,8 @@
 
 
                         // Append panel elements
-                        dataPanel.append(yearArr.join(""));
-                        dataPanel.append(monthArr.join(""));
+                        dataPanel.append($('<div class="row"/>').html(yearArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(monthArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(dayArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(dowArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(horArr.join("")));
@@ -555,8 +556,6 @@
                     // **Weeks**
                     case "weeks":
                         range = tools.parseWeeksRange(element.dateStart, element.dateEnd);
-                        yearArr = ['<div class="row"/>'];
-                        monthArr = ['<div class="row"/>'];
                         var year = range[0].getFullYear();
                         var month = range[0].getMonth();
                         var day = range[0];
@@ -613,7 +612,10 @@
 
                         var dataPanel = core.dataPanel(element, range.length * tools.getCellSize());
 
-                        dataPanel.append(yearArr.join("") + monthArr.join("") + dayArr.join("") + (dowArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(yearArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(monthArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(dayArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(dowArr.join("")));
 
                         break;
 
@@ -661,8 +663,8 @@
                         var dataPanel = core.dataPanel(element, range.length * tools.getCellSize());
 
                         // Append panel elements
-                        dataPanel.append(yearArr.join(""));
-                        dataPanel.append(monthArr.join(""));
+                        dataPanel.append($('<div class="row"/>').html(yearArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(monthArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(dayArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(dowArr.join("")));
 
@@ -740,8 +742,8 @@
 
                         // Append panel elements
 
-                        dataPanel.append(yearArr.join(""));
-                        dataPanel.append(monthArr.join(""));
+                        dataPanel.append($('<div class="row"/>').html(yearArr.join("")));
+                        dataPanel.append($('<div class="row"/>').html(monthArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(dayArr.join("")));
                         dataPanel.append($('<div class="row"/>').html(dowArr.join("")));
 
@@ -1578,9 +1580,9 @@
 
             // Deserialize a date from a string
             dateDeserialize: function (dateStr) {
-                //return eval("new" + dateStr.replace(/\//g, " "));
-                var date = eval("new" + dateStr.replace(/\//g, " "));
-                return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes());
+                var newDate = new Date();
+                newDate.setTime(dateStr.replace(/[^0-9]/g, ""));
+                return newDate;
             },
 
             // Generate an id for a date
@@ -1594,12 +1596,8 @@
                         }
                         return (new Date(t.getFullYear(), t.getMonth(), t.getDate(), hour)).getTime();
                     case "weeks":
-                        var y = t.getFullYear();
+                        var y = t.getDayForWeek().getFullYear();
                         var w = t.getDayForWeek().getWeekOfYear();
-                        var m = t.getMonth();
-                        if (m === 11 && w === 1) {
-                            y++;
-                        }
                         return y + "-" + w;
                     case "months":
                         return t.getFullYear() + "-" + t.getMonth();
